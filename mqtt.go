@@ -52,5 +52,8 @@ var statHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message)
 	for k, v := range statusMap {
 		deviceStatus[k] = v
 	}
+	for conn := range activeConns {
+		conn.WriteJSON(statuses)
+	}
 	fmt.Printf("statuses :%v\n", statuses)
 }

@@ -55,6 +55,7 @@ func main() {
 	http.HandleFunc("/", rootHtml)
 	http.HandleFunc("/set/", setState)
 	http.HandleFunc("/manifest.json", webmanifestHandler)
+	http.HandleFunc("/ws/states", websocketStatus)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
