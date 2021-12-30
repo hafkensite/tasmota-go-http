@@ -36,7 +36,7 @@ func main() {
 
 	opts := mqtt.NewClientOptions().AddBroker("tcp://192.168.2.252:1883").SetClientID("tasmota-go-http")
 	opts.SetKeepAlive(2 * time.Second)
-	// opts.SetDefaultPublishHandler(f)
+	opts.SetDefaultPublishHandler(f)
 	opts.SetPingTimeout(1 * time.Second)
 
 	c = mqtt.NewClient(opts)

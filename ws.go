@@ -17,7 +17,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var activeConns = make(map[*websocket.Conn]bool, 0)
+var activeConns = make(map[*websocket.Conn]bool)
 
 var websocketStatus http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
