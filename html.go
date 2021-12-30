@@ -56,12 +56,12 @@ type mainParams struct {
 func initTemplates() {
 	const tpl = `
 	<!DOCTYPE html>
-	<html>
+	<html lang="en">
 		<head>
 			<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1">
 			<link rel="manifest" href="/manifest.json">
-			<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+			<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 			<title>Tasmota switch control</title>
 		</head>
 		<body>
@@ -78,11 +78,11 @@ func initTemplates() {
 							<div class="card-body">
 								<div class="btn-group">
 									{{range $switch, $state := $values}}
-									<a 
-										href="/set/{{$topic}}/{{$switch}}/{{if eq $state "OFF"}}ON{{else}}OFF{{end}}"
-										class="btn btn-{{if eq $state "OFF"}}dark{{else}}light{{end}}">
+									<span 
+										id="btn_{{$topic}}_{{$switch}}"
+										class="btn">
 											{{$switch}}
-										</a>
+										</span>
 									{{end}}
 								</div>
 							</div>
@@ -92,7 +92,37 @@ func initTemplates() {
 				</div>
 			</div>
 		</div>
+		<script>
+			var first = true;
+			var internalstatus = {};
+			const socket = new WebSocket('ws://localhost:8080/ws/states');
+			socket.addEventListener('message', function (event) {
+				console.log('Message from server ', event.data);
+				internalstatus = JSON.parse(event.data);
 
+				Object.entries(internalstatus).forEach(([topic,btns]) => {
+					Object.entries(btns).forEach(([btn,state]) => {
+						console.log(topic,btn,state);
+						const el = document.getElementById('btn_' + topic + '_' + btn);
+						if (first) {
+							el.addEventListener('click', () => {
+								const sendmsg = {};
+								sendmsg[topic+'/'+btn] = internalstatus[topic][btn] == "OFF"?"ON":"OFF";
+								socket.send(JSON.stringify(sendmsg));
+							});
+						}
+						if (state == "OFF") {
+							el.classList.add("btn-dark");
+							el.classList.remove("btn-light");
+						} else {
+							el.classList.add("btn-light");
+							el.classList.remove("btn-dark");
+						}
+					});
+				});
+				first = false;
+			});
+		</script>
 		</body>
 	</html>`
 	var err error
