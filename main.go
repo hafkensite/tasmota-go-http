@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -34,7 +35,18 @@ func main() {
 
 	initTemplates()
 
-	opts := mqtt.NewClientOptions().AddBroker("tcp://192.168.2.252:1883").SetClientID("tasmota-go-http2")
+	mqttBroker, found := os.LookupEnv("MQTT_BROKER")
+	if !found {
+		log.Fatal("MQTT_BROKER not set.")
+	}
+	mqttClientId, found := os.LookupEnv("MQTT_CLIENT_ID")
+	if !found {
+		log.Fatal("MQTT_CLIENT_ID not set.")
+	}
+
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(mqttBroker)
+	opts.SetClientID(mqttClientId)
 	opts.SetKeepAlive(2 * time.Second)
 	opts.SetDefaultPublishHandler(f)
 	opts.SetPingTimeout(1 * time.Second)
@@ -53,9 +65,8 @@ func main() {
 	}
 
 	http.HandleFunc("/", rootHtml)
-	http.HandleFunc("/set/", setState)
 	http.HandleFunc("/manifest.json", webmanifestHandler)
-	http.HandleFunc("/ws/states", websocketStatus)
+	http.HandleFunc("/ws", websocketStatus)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

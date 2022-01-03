@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"text/template"
-	"time"
 )
 
 var mainTemplate *template.Template
@@ -16,17 +14,6 @@ var rootHtml http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 		Configs:  configs,
 		Statuses: statuses,
 	})
-}
-
-var setState http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	fmt.Printf("parts: %v\n", parts)
-	topic := fmt.Sprintf("cmnd/%s/%s", parts[2], parts[3])
-	fmt.Printf("Sending topic %s\n", topic)
-	c.Publish(topic, 0, false, parts[4])
-	time.Sleep(time.Millisecond * 250)
-	w.Header().Add("Location", "/")
-	w.WriteHeader(302)
 }
 
 var webmanifestHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +82,8 @@ func initTemplates() {
 		<script>
 			var first = true;
 			var internalstatus = {};
-			const socket = new WebSocket('ws://localhost:8080/ws/states');
+
+			const socket = new WebSocket((window.location.protocol === "https:" ? "wss" : "ws" ) + "://" + window.location.host + "/ws");
 			socket.addEventListener('message', function (event) {
 				console.log('Message from server ', event.data);
 				internalstatus = JSON.parse(event.data);
