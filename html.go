@@ -82,34 +82,52 @@ func initTemplates() {
 		<script>
 			var first = true;
 			var internalstatus = {};
-
-			const socket = new WebSocket((window.location.protocol === "https:" ? "wss" : "ws" ) + "://" + window.location.host + "/ws");
-			socket.addEventListener('message', function (event) {
-				console.log('Message from server ', event.data);
-				internalstatus = JSON.parse(event.data);
-
-				Object.entries(internalstatus).forEach(([topic,btns]) => {
-					Object.entries(btns).forEach(([btn,state]) => {
-						console.log(topic,btn,state);
-						const el = document.getElementById('btn_' + topic + '_' + btn);
-						if (first) {
-							el.addEventListener('click', () => {
-								const sendmsg = {};
-								sendmsg[topic+'/'+btn] = internalstatus[topic][btn] == "OFF"?"ON":"OFF";
-								socket.send(JSON.stringify(sendmsg));
-							});
-						}
-						if (state == "OFF") {
-							el.classList.add("btn-dark");
+			var socket;
+			function initws() {
+				socket = new WebSocket((window.location.protocol === "https:" ? "wss" : "ws" ) + "://" + window.location.host + "/ws");
+				socket.addEventListener('close', event => { 
+					console.log('The connection has been closed successfully.');
+					Object.entries(internalstatus).forEach(([topic,btns]) => {
+						Object.entries(btns).forEach(([btn,state]) => {
+							console.log(topic,btn,state);
+							const el = document.getElementById('btn_' + topic + '_' + btn);
 							el.classList.remove("btn-light");
-						} else {
-							el.classList.add("btn-light");
 							el.classList.remove("btn-dark");
-						}
+						});
 					});
+
+					setTimeout(initws, 250);
 				});
-				first = false;
-			});
+
+				socket.addEventListener('message', function (event) {
+					console.log('Message from server ', event.data);
+					internalstatus = JSON.parse(event.data);
+
+					Object.entries(internalstatus).forEach(([topic,btns]) => {
+						Object.entries(btns).forEach(([btn,state]) => {
+							console.log(topic,btn,state);
+							const el = document.getElementById('btn_' + topic + '_' + btn);
+							if (first) {
+								el.addEventListener('click', () => {
+									const sendmsg = {};
+									sendmsg[topic+'/'+btn] = internalstatus[topic][btn] == "OFF"?"ON":"OFF";
+									socket.send(JSON.stringify(sendmsg));
+								});
+							}
+							if (state == "OFF") {
+								el.classList.add("btn-dark");
+								el.classList.remove("btn-light");
+							} else {
+								el.classList.add("btn-light");
+								el.classList.remove("btn-dark");
+							}
+						});
+					});
+					first = false;
+				});
+			}
+
+			initws();
 		</script>
 		</body>
 	</html>`
